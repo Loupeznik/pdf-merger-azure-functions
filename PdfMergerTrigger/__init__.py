@@ -1,10 +1,10 @@
 import azure.functions as func
 
-from PyPDF2 import PdfFileMerger, PdfFileReader
+from PyPDF2 import PdfMerger, PdfReader
 import zipfile
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    pdf = PdfFileMerger()
+    pdf = PdfMerger()
     files = []
     temp_path = '/tmp/'
     output_filename = "output.pdf"
@@ -32,7 +32,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     for filename in files:
-        pdf.append(PdfFileReader(temp_path + filename, 'rb'))
+        pdf.append(PdfReader(temp_path + filename))
 
     pdf.write(temp_path + output_filename)   
 
