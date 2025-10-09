@@ -3,11 +3,11 @@ import os
 import zipfile
 
 import azure.functions as func
-from PyPDF2 import PdfMerger, PdfReader
+from pypdf import PdfReader, PdfWriter
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    pdf = PdfMerger()
+    pdf = PdfWriter()
     files = []
     temp_path = "/tmp/"
     output_filename = "output.pdf"
