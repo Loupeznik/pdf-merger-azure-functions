@@ -1,46 +1,71 @@
-import azure.functions as func
-
-from PyPDF2 import PdfFileMerger, PdfFileReader
+import os
 import zipfile
 
+import azure.functions as func
+from PyPDF2 import PdfMerger, PdfReader
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    pdf = PdfFileMerger()
+    pdf = PdfMerger()
     files = []
     temp_path = '/tmp/'
     output_filename = "output.pdf"
 
     if (len(req.files) > 1):
         return func.HttpResponse(
-             "Too many files",
-             status_code=400
+            "Too many files",
+            status_code=400
         )
 
     for input_file in req.files.values():
         filename = input_file.filename
         contents = input_file.stream.read()
 
-        with open(temp_path + filename, 'wb') as temp:
+        if not filename:
+            return func.HttpResponse(
+                "Uploaded file is missing a filename.",
+                status_code=400
+            )
+
+        zip_path = os.path.join(temp_path, filename)
+        with open(zip_path, 'wb') as temp:
             temp.write(contents)
         try:
-            with zipfile.ZipFile(temp_path + filename, 'r') as zip:
+            with zipfile.ZipFile(zip_path, 'r') as zip:
                 zip.extractall(temp_path)
-                files = zip.namelist()
+                files = [
+                    f for f in zip.namelist()
+                    if f.lower().endswith('.pdf')
+                    and not f.endswith('/')
+                    and not any(part.startswith('.') or part.startswith('__') for part in f.split('/'))
+                ]
         except:
             return func.HttpResponse(
                 "Uploaded file is not a .zip",
                 status_code=400
+            )
+
+    if not files:
+        return func.HttpResponse(
+            "No valid PDF files found in the zip archive",
+            status_code=400
         )
 
     for filename in files:
-        pdf.append(PdfFileReader(temp_path + filename, 'rb'))
+        file_path = os.path.join(temp_path, filename)
+        try:
+            pdf.append(PdfReader(file_path))
+        except Exception:
+            continue
 
-    pdf.write(temp_path + output_filename)   
+    output_path = os.path.join(temp_path, output_filename)
+    pdf.write(output_path)
 
     if len(pdf.pages) > 0:
-        with open(temp_path + output_filename, 'rb') as output:
+        with open(output_path, 'rb') as output:
             return func.HttpResponse(output.read(), mimetype="application/pdf")
     else:
         return func.HttpResponse(
-             "Merging failed",
-             status_code=400
+            "Merging failed",
+            status_code=400
         )
