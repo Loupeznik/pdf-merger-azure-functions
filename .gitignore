@@ -132,3 +132,6 @@ local.settings.json
 # Uploaded content
 *.pdf
 *.zip
+
+# Test data
+test-data/

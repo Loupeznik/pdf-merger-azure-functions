@@ -1,0 +1,53 @@
+### Test 1: Valid PDFs only (should succeed with all 3 PDFs merged)
+POST http://localhost:7071/api/PdfMergerTrigger
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="valid-pdfs.zip"
+Content-Type: application/zip
+
+< ../test-data/valid-pdfs.zip
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Expected Response Headers:
+# X-PDF-Total: 3
+# X-PDF-Success-Count: 3
+# X-PDF-Failed-Count: 0
+# X-PDF-Failed: [] (not included when count is 0)
+
+###
+
+### Test 2: Mixed valid and invalid PDFs (should succeed with 2 PDFs, skip 1)
+POST http://localhost:7071/api/PdfMergerTrigger
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="mixed-pdfs.zip"
+Content-Type: application/zip
+
+< ../test-data/mixed-pdfs.zip
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Expected Response Headers:
+# X-PDF-Total: 3
+# X-PDF-Success-Count: 2
+# X-PDF-Failed-Count: 1
+# X-PDF-Failed: ["invalid.pdf"]
+
+###
+
+### Test 3: Using curl command for valid PDFs
+# curl -X POST \
+#   http://localhost:7071/api/PdfMergerTrigger \
+#   -F "file=@test-data/valid-pdfs.zip" \
+#   -o output-valid.pdf \
+#   -i
+
+###
+
+### Test 4: Using curl command for mixed PDFs
+# curl -X POST \
+#   http://localhost:7071/api/PdfMergerTrigger \
+#   -F "file=@test-data/mixed-pdfs.zip" \
+#   -o output-mixed.pdf \
+#   -i
